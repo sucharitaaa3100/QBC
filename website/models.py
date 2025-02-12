@@ -47,3 +47,4 @@ class Score(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     time_stamp_of_attempt = db.Column(db.DateTime, default=func.now())
     total_score = db.Column(db.Integer, nullable=False)
+    
