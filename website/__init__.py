@@ -11,7 +11,9 @@ DB_NAME = "qbc.db"
 
 def create_app():
     app = Flask(__name__)
-    db.init_app()
+    app.config['SECRET_KEY'] = 'shahid'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    db.init_app(app)
     create_database(app)
     return app
 
