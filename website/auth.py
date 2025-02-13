@@ -7,6 +7,7 @@ auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    # if not verified redirect to verify
     # return dashboard is session present
     return #login page
 
@@ -22,8 +23,13 @@ def logout():
 
 @auth.route('/verify-email', methods=['GET', 'POST'])
 def verify_email():
-    # return login page
-    return # verify page
+    # if verified return login page
+    return # else verify page
 
 def generate_verification_code():
     return str(random.randint(100000, 999999))
+
+@auth.route('re-verify-email', methods=['GET', 'POST'])
+def resend_verification_code():
+    # redirect to verify_email
+    return #verify_email

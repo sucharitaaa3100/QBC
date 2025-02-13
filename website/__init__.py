@@ -33,7 +33,8 @@ def create_database(app):
                     email="admin_qbc@fastmail.com",
                     password=generate_password_hash("admin@123"),
                     full_name="Admin QBC",
-                    is_admin=True
+                    is_admin=True,
+                    is_verified=True
                 )
                 db.session.add(admin)
                 db.session.commit()
