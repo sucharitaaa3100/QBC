@@ -10,6 +10,8 @@ class User(db.Model, UserMixin):
     qualification = db.Column(db.String(150))
     dob = db.Column(db.Date)
     is_admin = db.Column(db.Boolean, default=False) 
+    verification_code = db.Column(db.String(6), nullable=True) 
+    is_verified = db.Column(db.Boolean, default=False)
     quizzes_attempted = db.relationship('Score', backref='user', lazy=True)
 
 class Subject(db.Model):
