@@ -6,15 +6,15 @@ views = Blueprint('views', __name__)
 @views.route('/', methods=['GET', 'POST'])
 def landing_page():
     print("Its here")
-    return render_template("landing_page.html")
+    return render_template("landing_page.html", user=current_user)
 
 @views.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    if(current_user.mail == "admin_qbc@fastmail.com"):
-        return #admin dashboard
+    if(current_user.email == "qbc_admin@fastmail.com"):
+        return render_template("admin_dashboard.html")
     else:    
-        return #user dashboard
+        return render_template("user_dashboard.html")
 
 @views.route('/about')
 def about():
