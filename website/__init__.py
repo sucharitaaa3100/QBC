@@ -7,21 +7,12 @@ from flask_mailman import Mail
 db = SQLAlchemy()
 DB_NAME = "qbc.db"
 
-
-def create_app():
-    app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'shahid'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
-    db.init_app(app)
-    from .models import User, Quiz, Question, Score, Chapter, Subject
-    create_database(app)
-    return app
-
 from werkzeug.security import generate_password_hash
 from .models import User 
+
 def create_database(app):
     with app.app_context():
-        if not path.exists('website/' + DB_NAME):
+        if not path.exists('instance/' + DB_NAME):
             db.create_all()
             print("Created Database!")
 
@@ -42,3 +33,20 @@ def create_database(app):
 
         else:
             print("Database already exists!")
+
+def create_app():
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = 'shahid'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    db.init_app(app)
+    
+    from .views import views
+    from .auth import auth
+    
+    app.register_blueprint(views, url_prefix='/')
+    app.register_blueprint(auth, url_prefix='/')
+    
+    from .models import User, Quiz, Question, Score, Chapter, Subject
+    create_database(app)
+    return app
+

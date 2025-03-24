@@ -29,7 +29,7 @@ def verify_email():
 def generate_verification_code():
     return str(random.randint(100000, 999999))
 
-@auth.route('re-verify-email', methods=['GET', 'POST'])
+@auth.route('/re-verify-email', methods=['GET', 'POST'])
 def resend_verification_code():
     # redirect to verify_email
     return #verify_email

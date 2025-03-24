@@ -3,50 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>QBC - Quiz Based Challenge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            background-color: peachpuff;
-        }
-        .container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            background-color: grey;
-            border-radius: 5%;
-        }
-        .inside {
-            margin: 50px;
-            padding: 10px;
+        body {
+            background: url("{{ url_for('static', filename='images/background-2.jpg') }}") no-repeat center center/cover;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: black;
             text-align: center;
         }
-        button {
-            margin: 10px;
-            padding: 10px;
-            display: inline-block;
-            width: 30%;
-            background-color: gray;
-            columns: black;
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(220, 217, 217, 0.8);
         }
-        button:hover{
+        .btn-custom {
+            width: 150px;
+            margin: 10px;
+            font-size: 18px;
+            border-radius: 25px;
+            color: white;
+        }
+        .btn-login {
+            background-color: #6a1b9a; /* Dark Purple */
+            border: none;
+        }
+        .btn-signup {
+            background-color: #9c27b0; /* Slightly Lighter Purple */
+            border: none;
+        }
+        .btn-custom:hover {
             color: white;
             background-color: black;
+        }
+        .logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
+        h1, p {
+            color: #6a1b9a; /* Darker Purple */
+        }
+        .subheading {
+            color: black;
+            font-size: 24px;
         }
     </style>
 </head>
 <body>
+    <img src="{{ url_for('static', filename='images/QBC_logo.png') }}" alt="QBC Logo" class="logo">
     <div class="container">
-        <div class="inside">
-            <h1 class>Welcome to QBC: Quiz-Based-Cohort</h1>
-            <h2 class>Learn, Compete, and Grow! </h2>
-            <button>Signup</button>
-            <button>Login</button>
+        <h1 class="fw-bold">QBC: Quiz Based Challenge</h1>
+        <p class="subheading">Test your knowledge, compete with others, and become the ultimate quiz champion!</p>
+        <div>
+            <a href="login.html" class="btn btn-custom btn-login">Login</a>
+            <a href="signup.html" class="btn btn-custom btn-signup">Sign Up</a>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
