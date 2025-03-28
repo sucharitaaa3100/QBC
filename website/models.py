@@ -19,6 +19,10 @@ class Subject(db.Model):
     name = db.Column(db.String(150), unique=True, nullable=False)
     description = db.Column(db.Text)
     chapters = db.relationship('Chapter', backref='subject', lazy=True, cascade="all, delete-orphan")
+    
+    def __init__(self, name, description=""):
+        self.name = name.lower()
+        self.description = description
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,9 +43,13 @@ class Quiz(db.Model):
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
-    question_statement = db.Column(db.Text, nullable=False)
-    options = db.Column(db.JSON, nullable=False)
-    correct_option = db.Column(db.Integer, nullable=False)
+    question_text = db.Column(db.String(500), nullable=False)  # Ensure the correct field name
+    option_a = db.Column(db.String(200), nullable=False)
+    option_b = db.Column(db.String(200), nullable=False)
+    option_c = db.Column(db.String(200), nullable=False)
+    option_d = db.Column(db.String(200), nullable=False)
+    correct_option = db.Column(db.String(1), nullable=False)  # Stores 'A', 'B', 'C', or 'D'
+
 
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)

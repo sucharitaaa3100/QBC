@@ -1,11 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-</head>
-<body>
-    <h1>Admin Dashboard</h1>
-</body>
-</html>
+{% extends "admin_base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+<a href="{{ url_for('views.add_subject') }}" class="btn btn-success mb-3">Add Subject</a>
+<hr>
+<h3>Subjects</h3>
+
+<div class="row">
+    {% for subject in subjects %}
+        <div class="col-md-4 mb-3">
+            <div class="card bg-light text-black shadow-sm">
+                <div class="card-body">
+                    <a href="{{ url_for('views.view_chapters', subject_id=subject.id) }}" class="text-decoration-none">
+                        <h5 class="card-title">{{ subject.name.title() }}</h5> <!-- Convert to Title Case -->
+                        <p class="card-text text-muted">{{ subject.description[:100] }}...</p> <!-- Show first 100 chars -->
+                    </a>
+                    <div class="d-flex justify-content-between mt-2">
+                        <a href="{{ url_for('views.view_chapters', subject_id=subject.id) }}" class="btn btn-primary btn-sm">View Chapters</a>
+                        <form action="{{ url_for('views.delete_subject', subject_id=subject.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this subject?');">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

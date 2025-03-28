@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 import random
 from flask_mailman import Mail, EmailMessage
 from datetime import datetime
@@ -82,13 +82,6 @@ def signup():
 
     return render_template('sign-up.html', user=current_user)
 
-@auth.route('/logout', methods=['GET', 'POST'])
-@login_required
-def logout():
-    logout_user()
-    flash("You have been logged out.", category="info")
-    return redirect(url_for('views.home'))
-
 @auth.route('/verify-email', methods=['GET', 'POST'])
 def verify_email():
     email = request.args.get('email')
@@ -133,3 +126,8 @@ def resend_verification_code():
     
     flash('User not found or already verified.', category='error')
     return redirect(url_for('auth.login'))
+
+@auth.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('views.landing_page'))  
