@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 import random
 from flask_mailman import Mail, EmailMessage
+from datetime import datetime
 from .models import User
 from flask_login import login_user, login_required, logout_user, current_user   
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -40,6 +41,9 @@ def signup():
         full_name = request.form.get('full_name')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
+        qualification = request.form.get('qualification')
+        dob = request.form.get('dob')
+        dob = datetime.strptime(dob, "%Y-%m-%d").date()
 
         user = User.query.filter_by(email=email).first()
         if user:
@@ -55,9 +59,11 @@ def signup():
         else:
             verification_code = generate_verification_code()
             new_user = User(
-                email=email, full_name=full_name,
+                email=email, 
+                full_name=full_name,
                 password=generate_password_hash(password1), 
-                is_verified=False,
+                qualification = qualification,
+                dob = dob,
                 verification_code=verification_code
             )
             db.session.add(new_user)

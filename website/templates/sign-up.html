@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,12 +17,14 @@
             color: black;
             text-align: center;
         }
+
         .container {
             max-width: 600px;
             padding: 20px;
             border-radius: 10px;
             background: rgba(220, 217, 217, 0.8);
         }
+
         .btn-custom {
             width: 150px;
             margin: 10px;
@@ -29,14 +32,17 @@
             border-radius: 25px;
             color: white;
         }
+
         .btn-signup {
             background-color: #9c27b0;
             border: none;
         }
+
         .btn-custom:hover {
             color: white;
             background-color: black;
         }
+
         .logo {
             position: absolute;
             top: 20px;
@@ -45,46 +51,58 @@
             height: 80px;
             border-radius: 50%;
         }
+
         h2 {
             color: #6a1b9a;
         }
+
         label {
             font-weight: bold;
         }
     </style>
 </head>
+
 <body>
     <img src="{{ url_for('static', filename='images/QBC_logo.png') }}" alt="QBC Logo" class="logo">
     <div class="container">
         <h2>Sign Up</h2>
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <p class="{{ category }}">{{ message }}</p>
-            {% endfor %}
+        {% for category, message in messages %}
+        <p class="{{ category }}">{{ message }}</p>
+        {% endfor %}
         {% endwith %}
         <form method="POST">
             <label for="full_name">Full Name:</label>
             <input type="text" name="full_name" class="form-control" required>
-            
+
             <label for="email">Email:</label>
             <input type="email" name="email" class="form-control" required>
-            
+
             <label for="password1">Password:</label>
             <input type="password" name="password1" class="form-control" required>
-            
+
             <label for="password2">Confirm Password:</label>
             <input type="password" name="password2" class="form-control" required>
-            
+
             <label for="qualification">Qualification:</label>
-            <input type="text" name="qualification" class="form-control" required>
-            
+            <select name="qualification" class="form-control" required>
+                <option value="">Select Qualification</option>
+                <option value="High School">High School</option>
+                <option value="Diploma">Diploma</option>
+                <option value="Undergraduate (Bachelors)">Undergraduate (Bachelors)</option>
+                <option value="Postgraduate (Masters)">Postgraduate (Masters)</option>
+                <option value="Doctorate (PhD)">Doctorate (PhD)</option>
+            </select>
+
+
             <label for="dob">Date of Birth:</label>
             <input type="date" name="dob" class="form-control" required>
-            
+
             <button type="submit" class="btn btn-custom btn-signup">Sign Up</button>
         </form>
         <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
