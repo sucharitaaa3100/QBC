@@ -1,8 +1,9 @@
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
+from sqlalchemy import func
 import json
 from . import db
-from .models import Subject, Chapter, Quiz, Question
+from .models import Subject, Chapter, Quiz, Question, Score
 from .decorators import admin_required
 
 views = Blueprint("views", __name__)
@@ -199,3 +200,53 @@ def delete_question(question_id):
     db.session.commit()
     flash("Question deleted successfully!", "danger")
     return redirect(url_for("views.view_quiz", quiz_id=quiz_id))
+
+@views.route("/analytics")
+@login_required
+@admin_required
+def analytics():
+    # Fetch total quizzes attempted
+    total_quizzes = db.session.query(Quiz).count()
+
+    # Calculate average score
+    avg_score = db.session.query(func.avg(Score.total_score)).scalar()
+    avg_score = round(avg_score, 2) if avg_score else 0
+
+    # Count active users (users who have attempted at least one quiz)
+    active_users = db.session.query(Score.user_id).distinct().count()
+
+    # Get most popular subject
+    popular_subject = db.session.execute(
+        db.text("""
+            SELECT subject.name 
+            FROM subject
+            JOIN chapter ON subject.id = chapter.subject_id
+            JOIN quiz ON chapter.id = quiz.chapter_id
+            JOIN score ON quiz.id = score.quiz_id
+            GROUP BY subject.id 
+            ORDER BY COUNT(score.quiz_id) DESC 
+            LIMIT 1
+        """)
+    ).scalar() or "N/A"
+
+    # Get most attempted chapter
+    popular_chapter = db.session.execute(
+        db.text("""
+            SELECT chapter.name 
+            FROM chapter
+            JOIN quiz ON chapter.id = quiz.chapter_id
+            JOIN score ON quiz.id = score.quiz_id
+            GROUP BY chapter.id 
+            ORDER BY COUNT(score.quiz_id) DESC 
+            LIMIT 1
+        """)
+    ).scalar() or "N/A"
+
+    return render_template(
+        "analytics.html",
+        total_quizzes=total_quizzes,
+        average_score=avg_score,
+        active_users=active_users,
+        popular_subject=popular_subject,
+        popular_chapter=popular_chapter,
+    )
