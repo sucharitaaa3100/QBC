@@ -250,3 +250,13 @@ def analytics():
         popular_subject=popular_subject,
         popular_chapter=popular_chapter,
     )
+
+@admin_required
+@login_required
+@views.route('/quiz/<int:quiz_id>/toggle_publish', methods=['POST'])
+def toggle_publish(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    quiz.published = not quiz.published
+    db.session.commit()
+    return redirect(request.referrer)
+

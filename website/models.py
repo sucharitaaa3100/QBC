@@ -39,6 +39,12 @@ class Quiz(db.Model):
     remarks = db.Column(db.Text)
     questions = db.relationship('Question', backref='quiz', lazy=True, cascade="all, delete-orphan")
     scores = db.relationship('Score', backref='quiz', lazy=True, cascade="all, delete-orphan")
+    published = db.Column(db.Boolean, default=False)  # New column for publish/unpublish
+
+    def toggle_publish(self):
+        self.published = not self.published
+        db.session.commit()
+
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
