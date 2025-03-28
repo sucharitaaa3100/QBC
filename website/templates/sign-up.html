@@ -59,6 +59,9 @@
         label {
             font-weight: bold;
         }
+        .eye-btn:hover{
+            background-color: white;
+        }
     </style>
 </head>
 
@@ -79,10 +82,22 @@
             <input type="email" name="email" class="form-control" required>
 
             <label for="password1">Password:</label>
-            <input type="password" name="password1" class="form-control" required>
+            <div class="input-group">
+                <input type="password" name="password1" id="password1" class="form-control" required>
+                <button type="button" class="btn btn-outline-secondary eye-btn"
+                    onclick="togglePassword('password1', 'togglePassword1')">
+                    <i id="togglePassword1" class="fa fa-eye-slash text-secondary"></i>
+                </button>
+            </div>
 
             <label for="password2">Confirm Password:</label>
-            <input type="password" name="password2" class="form-control" required>
+            <div class="input-group">
+                <input type="password" name="password2" id="password2" class="form-control" required>
+                <button type="button" class="btn btn-outline-secondary eye-btn"
+                    onclick="togglePassword('password2', 'togglePassword2')">
+                    <i id="togglePassword2" class="fa fa-eye-slash text-secondary"></i>
+                </button>
+            </div>
 
             <label for="qualification">Qualification:</label>
             <select name="qualification" class="form-control" required>
@@ -104,5 +119,23 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+<script>
+    function togglePassword(inputId, iconId) {  
+        let input = document.getElementById(inputId);
+        let icon = document.getElementById(iconId);
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        }
+    }
+</script>
 
 </html>
