@@ -24,6 +24,17 @@
             <label for="description" class="form-label">Description</label>
             <textarea class="form-control" id="description" name="description" rows="3"></textarea>
         </div>
+        <div class="mb-3">
+            <label for="qualification" class="form-label">Qualification</label>
+            <select class="form-control" id="qualification" name="qualification" required>
+                <option value="">Select Qualification</option>
+                <option value="bachelor">Bachelor's Degree</option>
+                <option value="master">Master's Degree</option>
+                <option value="phd">Ph.D.</option>
+                <option value="diploma">Diploma</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
         <button type="submit" class="btn btn-success">Add Subject</button>
         <a href="{{ url_for('views.admin_dashboard') }}" class="btn btn-secondary">Back</a>
     </form>

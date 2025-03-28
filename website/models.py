@@ -17,12 +17,14 @@ class User(db.Model, UserMixin):
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
+    qualification = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text)
     chapters = db.relationship('Chapter', backref='subject', lazy=True, cascade="all, delete-orphan")
     
-    def __init__(self, name, description=""):
+    def __init__(self, name, qualification, description=""):
         self.name = name.lower()
         self.description = description
+        self.qualification = qualification.lower()
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)

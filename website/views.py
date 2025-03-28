@@ -58,12 +58,13 @@ def add_subject():
     if request.method == "POST":
         name = request.form.get("name", "").strip().lower()  # Convert to lowercase
         description = request.form.get("description", "").strip()
+        qualification = request.form.get("qualification", "").strip()
 
         # Check for case-insensitive duplicate
         if Subject.query.filter(db.func.lower(Subject.name) == name).first():
             flash("Subject already exists!", "error")
         else:
-            new_subject = Subject(name=name, description=description)
+            new_subject = Subject(name=name, description=description, qualification=qualification)
             db.session.add(new_subject)
             db.session.commit()
             flash("Subject added successfully!", "success")
