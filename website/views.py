@@ -326,28 +326,28 @@ def start_quiz(quiz_id):
 
 
 
-@views.route("/user/quiz/submit", methods=["POST"])
-@login_required
-@user_required
-def submit_quiz():
-    quiz_id = request.form.get("quiz_id")  # Get quiz_id from form-data
+# @views.route("/user/quiz/submit", methods=["POST"])
+# @login_required
+# @user_required
+# def submit_quiz():
+#     quiz_id = request.form.get("quiz_id")  # Get quiz_id from form-data
 
-    if not quiz_id:  # Debugging issue
-        return jsonify({"success": False, "message": "Error: Quiz ID is missing!"}), 400
+#     if not quiz_id:  # Debugging issue
+#         return jsonify({"success": False, "message": "Error: Quiz ID is missing!"}), 400
 
-    responses = {key.replace("question_", ""): value for key, value in request.form.items() if key.startswith("question_")}
+#     responses = {key.replace("question_", ""): value for key, value in request.form.items() if key.startswith("question_")}
 
-    # Fetch relevant questions
-    questions = Question.query.filter(Question.quiz_id == quiz_id, Question.id.in_(map(int, responses.keys()))).all()
+#     # Fetch relevant questions
+#     questions = Question.query.filter(Question.quiz_id == quiz_id, Question.id.in_(map(int, responses.keys()))).all()
 
-    correct_answers = sum(1 for q in questions if q.correct_option.upper() == responses.get(str(q.id), "").strip().upper())
+#     correct_answers = sum(1 for q in questions if q.correct_option.upper() == responses.get(str(q.id), "").strip().upper())
 
-    # Store the score
-    score = Score(user_id=current_user.id, quiz_id=int(quiz_id), total_score=correct_answers)
-    db.session.add(score)
-    db.session.commit()
+#     # Store the score
+#     score = Score(user_id=current_user.id, quiz_id=int(quiz_id), total_score=correct_answers)
+#     db.session.add(score)
+#     db.session.commit()
 
-    return jsonify({"success": True, "message": "Quiz submitted successfully!", "score": correct_answers})
+#     return jsonify({"success": True, "message": "Quiz submitted successfully!", "score": correct_answers})
 
 @user_required
 @views.route('/user/analytics')
@@ -402,3 +402,59 @@ def user_analytics_data():
         "subject_performance": subject_performance_data,
         "past_performance": past_performance_data
     })
+
+
+
+@views.route("/user/quiz/submit", methods=["POST"])
+@login_required
+@user_required
+def submit_quiz():
+    quiz_id = request.form.get("quiz_id")
+    
+    if not quiz_id:
+        return jsonify({"success": False, "message": "Error: Quiz ID is missing!"}), 400
+    
+    responses = {
+        key.replace("question_", ""): value 
+        for key, value in request.form.items() if key.startswith("question_")
+    }
+
+    questions = Question.query.filter(Question.quiz_id == quiz_id, Question.id.in_(map(int, responses.keys()))).all()
+    
+    correct_answers = 0
+    user_answers = {}
+    
+    for q in questions:
+        selected_option = responses.get(str(q.id), "").strip().upper()
+        correct_option = q.correct_option.upper()
+        
+        if selected_option == correct_option:
+            correct_answers += 1
+        
+        user_answers[q.id] = selected_option  # Store user-selected answers
+    
+    score = Score(user_id=current_user.id, quiz_id=int(quiz_id), total_score=correct_answers, answers=json.dumps(user_answers))
+    db.session.add(score)
+    db.session.commit()
+    
+    flash("Quiz submitted successfully! View your performance.", "success")
+    return redirect(url_for("views.view_performance", quiz_id=quiz_id))
+
+@views.route("/user/quiz/performance/<int:quiz_id>")
+@login_required
+@user_required
+def view_performance(quiz_id):
+    score = Score.query.filter_by(user_id=current_user.id, quiz_id=quiz_id).order_by(Score.time_stamp_of_attempt.desc()).first()
+    if not score:
+        flash("No performance data available for this quiz.", "warning")
+        return redirect(url_for("views.user_dashboard"))
+    
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    # Ensure valid JSON parsing and handle empty string
+    try:
+        user_answers = json.loads(score.answers) if score.answers else {}
+    except json.JSONDecodeError:
+        user_answers = {}
+    
+    return render_template("performance.html", questions=questions, user_answers=user_answers, score=score)

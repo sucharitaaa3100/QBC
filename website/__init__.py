@@ -3,10 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from os import path
 from flask_login import LoginManager
 from flask_mailman import Mail
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
 
 db = SQLAlchemy()
 mail = Mail()  
+
 
 DB_NAME = "qbc.db"
 
@@ -52,7 +54,7 @@ def create_app():
     
     db.init_app(app)
     mail.init_app(app)
-
+    migrate = Migrate(app, db)
     # Initialize Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)

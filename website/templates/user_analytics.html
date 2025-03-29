@@ -1,11 +1,11 @@
 {% extends 'user_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>User Analytics</h2>
+<div class="container-fluid mt-4">
+    <h2 class="text-center">User Analytics</h2>
 
-    <div class="row">
-        <div class="col-md-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-4 col-md-6">
             <div class="card text-white bg-primary mb-3">
                 <div class="card-body text-center">
                     <h5 class="card-title">Quizzes Attempted</h5>
@@ -13,7 +13,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-lg-4 col-md-6">
             <div class="card text-white bg-success mb-3">
                 <div class="card-body text-center">
                     <h5 class="card-title">Average Score</h5>
@@ -24,14 +24,14 @@
     </div>
 
     <div class="row mt-4">
-        <div class="col-md-6">
+        <div class="col-lg-6">
             <div class="card p-3">
-                <canvas id="subjectPerformanceChart" style="height: 350px; width: 100%;"></canvas>
+                <canvas id="subjectPerformanceChart" class="w-100 vh-50"></canvas>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-lg-6">
             <div class="card p-3">
-                <canvas id="pastPerformanceChart" style="height: 350px; width: 100%;"></canvas>
+                <canvas id="pastPerformanceChart" class="w-100 vh-50"></canvas>
             </div>
         </div>
     </div>
@@ -58,7 +58,8 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: true, position: 'top' } }
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
 
@@ -78,7 +79,8 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: true, position: 'top' } }
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         })
