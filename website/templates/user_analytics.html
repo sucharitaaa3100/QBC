@@ -1,34 +1,87 @@
-{% extends "user_base.html" %}
-{% block title %}User Analytics{% endblock %}
+{% extends 'user_base.html' %}
 
 {% block content %}
 <div class="container mt-4">
     <h2>User Analytics</h2>
-    <p><strong>Total Attempts:</strong> {{ user_attempts }}</p>
-    <p><strong>Average Score:</strong> {{ user_avg_score | default(0) | round(2) }}</p>
 
-    <canvas id="subjectScoresChart"></canvas>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Quizzes Attempted</h5>
+                    <p class="card-text display-4" id="quizzes_attempted">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Average Score</h5>
+                    <p class="card-text display-4" id="avg_score">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <canvas id="subjectPerformanceChart" style="height: 350px; width: 100%;"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <canvas id="pastPerformanceChart" style="height: 350px; width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctxUser = document.getElementById('subjectScoresChart').getContext('2d');
-    new Chart(ctxUser, {
-        type: 'bar',
-        data: {
-            labels: {{ subject_labels | default([]) | tojson }},
-            datasets: [{
-                label: 'Average Score by Subject',
-                data: {{ subject_scores | default([]) | tojson }},
-                backgroundColor: 'rgba(255, 99, 132, 0.6)'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
+    fetch('/user/analytics/data')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('quizzes_attempted').innerText = data.quizzes_attempted;
+            document.getElementById('avg_score').innerText = data.avg_score.toFixed(2);
+
+            new Chart(document.getElementById('subjectPerformanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.subject_performance.map(item => item.subject),
+                    datasets: [{
+                        label: 'Avg Score per Subject',
+                        data: data.subject_performance.map(item => item.avg_score),
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } }
+                }
+            });
+
+            new Chart(document.getElementById('pastPerformanceChart'), {
+                type: 'line',
+                data: {
+                    labels: data.past_performance.map(item => new Date(item.timestamp).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Recent Quiz Scores',
+                        data: data.past_performance.map(item => item.score),
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } }
+                }
+            });
+        })
+        .catch(error => console.error("Error fetching analytics data:", error));
 </script>
 {% endblock %}

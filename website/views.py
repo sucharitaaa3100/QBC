@@ -206,33 +206,59 @@ def delete_question(question_id):
 @login_required
 @admin_required
 def admin_analytics():
-    if not current_user.is_admin:
-        return "Unauthorized", 403
+    return render_template('admin_analytics.html')
+
+@views.route('/admin/analytics/data')
+@login_required  # If applicable
+@admin_required
+def admin_analytics_data():
+        # Exclude admins from student count
+    total_students = User.query.filter_by(is_admin=False).count()
     
-    # Total Users
-    total_users = User.query.count()
-    
-    # Total Quizzes
+    total_subjects = Subject.query.count()
     total_quizzes = Quiz.query.count()
-    
-    # Total Attempts
-    total_attempts = Score.query.count()
-    
-    # Average Score per Quiz
-    avg_scores = (
-        db.session.query(Quiz.id, func.avg(Score.total_score).label("avg_score"))
-        .join(Score, Score.quiz_id == Quiz.id)
-        .group_by(Quiz.id)
-        .all()
-    )
-    
-    avg_score_data = {quiz_id: avg_score for quiz_id, avg_score in avg_scores}
-    
-    return render_template("admin_analytics.html", 
-                           total_users=total_users, 
-                           total_quizzes=total_quizzes,
-                           total_attempts=total_attempts,
-                           avg_score_data=avg_score_data)
+    active_quizzes = Quiz.query.filter_by(published=True).count()
+
+    # Subject Performance (Average Scores Per Subject, Excluding Admins)
+    subject_performance = db.session.query(
+        Subject.name, func.coalesce(func.avg(Score.total_score), 0)
+    ).join(Chapter).join(Quiz).outerjoin(Score).join(User).filter(User.is_admin == False) \
+    .group_by(Subject.id).all()
+
+    # Convert to dictionary format
+    subject_performance_data = [
+        {"subject": subject, "avg_score": avg_score}
+        for subject, avg_score in subject_performance
+    ]
+
+    # Qualification Distribution (Excluding Admins)
+    qualification_distribution = db.session.query(
+        User.qualification, func.count(User.id)
+    ).filter(User.is_admin == False).group_by(User.qualification).all()
+
+    qualification_distribution_data = [
+        {"qualification": qualification, "count": count}
+        for qualification, count in qualification_distribution
+    ]
+
+    # Performance Distribution (Excluding Admins)
+    performance_distribution = db.session.query(
+        Score.total_score, func.count(Score.id)
+    ).join(User).filter(User.is_admin == False).group_by(Score.total_score).all()
+
+    performance_distribution_data = [
+        {"score": score, "count": count} for score, count in performance_distribution
+    ]
+
+    return jsonify({
+        "total_students": total_students,
+        "total_subjects": total_subjects,
+        "total_quizzes": total_quizzes,
+        "active_quizzes": active_quizzes,
+        "subject_performance": subject_performance_data,
+        "qualification_distribution": qualification_distribution_data,
+        "performance_distribution": performance_distribution_data
+    })
 
 @admin_required
 @login_required
@@ -324,26 +350,55 @@ def submit_quiz():
     return jsonify({"success": True, "message": "Quiz submitted successfully!", "score": correct_answers})
 
 @user_required
-@views.route("/user/analytics")
+@views.route('/user/analytics')
 @login_required
 def user_analytics():
-    # User's Total Quiz Attempts
-    user_attempts = Score.query.filter_by(user_id=current_user.id).count()
-    
-    # User's Average Score
-    user_avg_score = db.session.query(func.avg(Score.total_score)).filter_by(user_id=current_user.id).scalar() or 0
-    
-    # Score History
-    score_history = (
-        db.session.query(Quiz.id, Score.total_score, Score.time_stamp_of_attempt)
-        .join(Quiz, Score.quiz_id == Quiz.id)
-        .filter(Score.user_id == current_user.id)
-        .order_by(Score.time_stamp_of_attempt)
-        .all()
-    )
-    
-    return render_template("user_analytics.html", 
-                           user_attempts=user_attempts, 
-                           user_avg_score=user_avg_score,
-                           score_history=score_history)
+    return render_template('user_analytics.html')
 
+@user_required
+@views.route('/user/analytics/data')
+@login_required
+def user_analytics_data():
+    user_id = current_user.id  # Fetch logged-in user ID
+
+    # Total quizzes attempted by the user
+    quizzes_attempted = Score.query.filter_by(user_id=user_id).count()
+
+    # Average score of the user
+    avg_score = db.session.query(db.func.avg(Score.total_score))\
+        .filter_by(user_id=user_id).scalar() or 0
+
+    # Performance per subject
+    subject_performance = db.session.query(
+        Subject.name, db.func.avg(Score.total_score)
+    ).select_from(Score)\
+     .join(Quiz, Quiz.id == Score.quiz_id)\
+     .join(Subject, Subject.id == Quiz.id)\
+     .filter(Score.user_id == user_id)\
+     .group_by(Subject.name)\
+     .all()
+
+    # Convert subject performance data into JSON serializable format
+    subject_performance_data = [
+        {"subject": subject, "avg_score": round(avg_score, 2)}
+        for subject, avg_score in subject_performance
+    ]
+
+    # Fetch last 5 quiz attempts with timestamps
+    past_performance = Score.query.filter_by(user_id=user_id)\
+        .order_by(Score.time_stamp_of_attempt.desc())\
+        .limit(5)\
+        .all()
+
+    # Convert past performance data
+    past_performance_data = [
+        {"timestamp": p.time_stamp_of_attempt.strftime("%Y-%m-%d %H:%M:%S"), "score": p.total_score}
+        for p in past_performance
+    ]
+
+    return jsonify({
+        "quizzes_attempted": quizzes_attempted,
+        "avg_score": round(avg_score, 2),
+        "subject_performance": subject_performance_data,
+        "past_performance": past_performance_data
+    })

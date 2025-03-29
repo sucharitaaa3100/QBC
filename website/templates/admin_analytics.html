@@ -1,36 +1,137 @@
-{% extends "admin_base.html" %}
-{% block title %}Admin Analytics{% endblock %}
+{% extends 'admin_base.html' %}
 
 {% block content %}
 <div class="container mt-4">
     <h2>Admin Analytics</h2>
-    <p><strong>Total Users:</strong> {{ total_users }}</p>
-    <p><strong>Total Quizzes:</strong> {{ total_quizzes }}</p>
-    <p><strong>Total Attempts:</strong> {{ total_attempts }}</p>
-    <p><strong>Average Score:</strong> {{ avg_scores | default(0) | round(2) }}</p>
 
-    <canvas id="quizAttemptsChart"></canvas>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Students</h5>
+                    <p class="card-text" id="total_students">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Subjects</h5>
+                    <p class="card-text" id="total_subjects">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Quizzes</h5>
+                    <p class="card-text" id="total_quizzes">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Active Quizzes</h5>
+                    <p class="card-text" id="active_quizzes">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <h5>Subject Performance (Avg. Score per Subject)</h5>
+            <canvas id="subjectPerformanceChart" style="max-height: 250px;"></canvas>
+        </div>
+        <div class="col-md-4">
+            <h5>Qualification Distribution of Students</h5>
+            <canvas id="qualificationDistributionChart" style="max-height: 250px;"></canvas>
+        </div>
+        <div class="col-md-4">
+            <h5>Score Distribution Among Students</h5>
+            <canvas id="performanceDistributionChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+
+    <h3 class="mt-5">User Performance Analytics</h3>
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Qualification</th>
+                <th>Average Score</th>
+                <th>Quiz Attempts</th>
+            </tr>
+        </thead>
+        <tbody id="userPerformanceTableBody"></tbody>
+    </table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('quizAttemptsChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: {{ quiz_labels | default([]) | tojson }},
-            datasets: [{
-                label: 'Quiz Attempts',
-                data: {{ quiz_attempts | default([]) | tojson }},
-                backgroundColor: 'rgba(54, 162, 235, 0.6)'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
-    });
+    fetch('/admin/analytics/data')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total_students').innerText = data.total_students;
+            document.getElementById('total_subjects').innerText = data.total_subjects;
+            document.getElementById('total_quizzes').innerText = data.total_quizzes;
+            document.getElementById('active_quizzes').innerText = data.active_quizzes;
+
+            new Chart(document.getElementById('subjectPerformanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.subject_performance.map(item => item.subject),
+                    datasets: [{
+                        label: 'Average Score',
+                        data: data.subject_performance.map(item => item.avg_score),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            new Chart(document.getElementById('qualificationDistributionChart'), {
+                type: 'pie',
+                data: {
+                    labels: data.qualification_distribution.map(item => item.qualification),
+                    datasets: [{
+                        data: data.qualification_distribution.map(item => item.count),
+                        backgroundColor: ['#ff6384', '#36a2eb', '#ffce56']
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            new Chart(document.getElementById('performanceDistributionChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.performance_distribution.map(item => item.score),
+                    datasets: [{
+                        label: 'Students Count',
+                        data: data.performance_distribution.map(item => item.count),
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            const userTable = document.getElementById('userPerformanceTableBody');
+            userTable.innerHTML = "";
+            data.user_performance.forEach(user => {
+                let row = `
+                    <tr>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.qualification}</td>
+                        <td>${user.avg_score}</td>
+                        <td>${user.quiz_attempts}</td>
+                    </tr>
+                `;
+                userTable.innerHTML += row;
+            });
+        })
+        .catch(error => console.error("Error fetching analytics data:", error));
 </script>
 {% endblock %}
