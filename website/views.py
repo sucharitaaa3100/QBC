@@ -292,27 +292,29 @@ def start_quiz(quiz_id):
 
     return render_template("quiz_page.html", quiz=quiz, questions=questions)
 
+
 @views.route("/user/quiz/submit", methods=["POST"])
 @login_required
 @user_required
 def submit_quiz():
-    data = request.get_json()
-    quiz_id = data.get("quiz_id")
-    responses = data.get("responses", {})
+    quiz_id = request.form.get("quiz_id")  # Get quiz_id from form-data
 
-    # Fetch correct answers directly from the database
-    correct_answers = (
-        db.session.query(Question)
-        .filter(Question.quiz_id == quiz_id, Question.id.in_(responses.keys()))
-        .filter(Question.correct_option == db.func.coalesce(responses[db.cast(Question.id, db.String)], ""))
-        .count()
-    )
+    if not quiz_id:  # Debugging issue
+        return jsonify({"success": False, "message": "Error: Quiz ID is missing!"}), 400
+
+    responses = {key.replace("question_", ""): value for key, value in request.form.items() if key.startswith("question_")}
+
+    # Fetch relevant questions
+    questions = Question.query.filter(Question.quiz_id == quiz_id, Question.id.in_(map(int, responses.keys()))).all()
+
+    correct_answers = sum(1 for q in questions if q.correct_option.upper() == responses.get(str(q.id), "").strip().upper())
 
     # Store the score
-    score = Score(user_id=current_user.id, quiz_id=quiz_id, total_score=correct_answers)
+    score = Score(user_id=current_user.id, quiz_id=int(quiz_id), total_score=correct_answers)
     db.session.add(score)
     db.session.commit()
 
-    return jsonify({"message": "Quiz submitted!", "score": correct_answers})
+    return jsonify({"success": True, "message": "Quiz submitted successfully!", "score": correct_answers})
+
 
 
