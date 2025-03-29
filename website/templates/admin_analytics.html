@@ -1,0 +1,36 @@
+{% extends "admin_base.html" %}
+{% block title %}Admin Analytics{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Admin Analytics</h2>
+    <p><strong>Total Users:</strong> {{ total_users }}</p>
+    <p><strong>Total Quizzes:</strong> {{ total_quizzes }}</p>
+    <p><strong>Total Attempts:</strong> {{ total_attempts }}</p>
+    <p><strong>Average Score:</strong> {{ avg_scores | default(0) | round(2) }}</p>
+
+    <canvas id="quizAttemptsChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('quizAttemptsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ quiz_labels | default([]) | tojson }},
+            datasets: [{
+                label: 'Quiz Attempts',
+                data: {{ quiz_attempts | default([]) | tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+{% endblock %}

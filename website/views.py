@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from sqlalchemy import func
 import json
 from . import db
-from .models import Subject, Chapter, Quiz, Question, Score
+from .models import Subject, Chapter, Quiz, Question, Score, User
 from .decorators import admin_required, user_required
 
 views = Blueprint("views", __name__)
@@ -205,52 +205,34 @@ def delete_question(question_id):
 @views.route("/admin/analytics")
 @login_required
 @admin_required
-def analytics():
-    # Fetch total quizzes attempted
-    total_quizzes = db.session.query(Quiz).count()
-
-    # Calculate average score
-    avg_score = db.session.query(func.avg(Score.total_score)).scalar()
-    avg_score = round(avg_score, 2) if avg_score else 0
-
-    # Count active users (users who have attempted at least one quiz)
-    active_users = db.session.query(Score.user_id).distinct().count()
-
-    # Get most popular subject
-    popular_subject = db.session.execute(
-        db.text("""
-            SELECT subject.name 
-            FROM subject
-            JOIN chapter ON subject.id = chapter.subject_id
-            JOIN quiz ON chapter.id = quiz.chapter_id
-            JOIN score ON quiz.id = score.quiz_id
-            GROUP BY subject.id 
-            ORDER BY COUNT(score.quiz_id) DESC 
-            LIMIT 1
-        """)
-    ).scalar() or "N/A"
-
-    # Get most attempted chapter
-    popular_chapter = db.session.execute(
-        db.text("""
-            SELECT chapter.name 
-            FROM chapter
-            JOIN quiz ON chapter.id = quiz.chapter_id
-            JOIN score ON quiz.id = score.quiz_id
-            GROUP BY chapter.id 
-            ORDER BY COUNT(score.quiz_id) DESC 
-            LIMIT 1
-        """)
-    ).scalar() or "N/A"
-
-    return render_template(
-        "analytics.html",
-        total_quizzes=total_quizzes,
-        average_score=avg_score,
-        active_users=active_users,
-        popular_subject=popular_subject,
-        popular_chapter=popular_chapter,
+def admin_analytics():
+    if not current_user.is_admin:
+        return "Unauthorized", 403
+    
+    # Total Users
+    total_users = User.query.count()
+    
+    # Total Quizzes
+    total_quizzes = Quiz.query.count()
+    
+    # Total Attempts
+    total_attempts = Score.query.count()
+    
+    # Average Score per Quiz
+    avg_scores = (
+        db.session.query(Quiz.id, func.avg(Score.total_score).label("avg_score"))
+        .join(Score, Score.quiz_id == Quiz.id)
+        .group_by(Quiz.id)
+        .all()
     )
+    
+    avg_score_data = {quiz_id: avg_score for quiz_id, avg_score in avg_scores}
+    
+    return render_template("admin_analytics.html", 
+                           total_users=total_users, 
+                           total_quizzes=total_quizzes,
+                           total_attempts=total_attempts,
+                           avg_score_data=avg_score_data)
 
 @admin_required
 @login_required
@@ -341,5 +323,27 @@ def submit_quiz():
 
     return jsonify({"success": True, "message": "Quiz submitted successfully!", "score": correct_answers})
 
-
+@user_required
+@views.route("/user/analytics")
+@login_required
+def user_analytics():
+    # User's Total Quiz Attempts
+    user_attempts = Score.query.filter_by(user_id=current_user.id).count()
+    
+    # User's Average Score
+    user_avg_score = db.session.query(func.avg(Score.total_score)).filter_by(user_id=current_user.id).scalar() or 0
+    
+    # Score History
+    score_history = (
+        db.session.query(Quiz.id, Score.total_score, Score.time_stamp_of_attempt)
+        .join(Quiz, Score.quiz_id == Quiz.id)
+        .filter(Score.user_id == current_user.id)
+        .order_by(Score.time_stamp_of_attempt)
+        .all()
+    )
+    
+    return render_template("user_analytics.html", 
+                           user_attempts=user_attempts, 
+                           user_avg_score=user_avg_score,
+                           score_history=score_history)
 
