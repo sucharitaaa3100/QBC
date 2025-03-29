@@ -4,7 +4,7 @@ from sqlalchemy import func
 import json
 from . import db
 from .models import Subject, Chapter, Quiz, Question, Score
-from .decorators import admin_required
+from .decorators import admin_required, user_required
 
 views = Blueprint("views", __name__)
 
@@ -17,7 +17,7 @@ def landing_page():
 def dashboard():
     if current_user.is_admin:
         return redirect(url_for("views.admin_dashboard"))
-    return render_template("user_dashboard.html")
+    return redirect(url_for("views.user_dashboard"))
 
 @views.route("/about")
 def about():
@@ -30,7 +30,7 @@ def admin_dashboard():
     subjects = Subject.query.all()
     return render_template("admin_dashboard.html", subjects=subjects)
 
-@views.route("/delete_subject/<int:subject_id>", methods=["POST"])
+@views.route("/admin/delete_subject/<int:subject_id>", methods=["POST"])
 @login_required
 @admin_required
 def delete_subject(subject_id):
@@ -40,7 +40,7 @@ def delete_subject(subject_id):
     flash("Subject deleted successfully.", "success")
     return redirect(url_for("views.admin_dashboard"))
 
-@views.route("/delete_chapter/<int:chapter_id>", methods=["POST"])
+@views.route("/admin/delete_chapter/<int:chapter_id>", methods=["POST"])
 @login_required
 @admin_required
 def delete_chapter(chapter_id):
@@ -100,7 +100,7 @@ def add_chapter(subject_id):
 
     return render_template("add_chapter.html", subject=subject)
 
-@views.route("/quiz/<int:quiz_id>", methods=["GET", "POST"])
+@views.route("/admin/quiz/<int:quiz_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
 def view_quiz(quiz_id):
@@ -160,7 +160,7 @@ def view_quizzes(chapter_id):
     quizzes = Quiz.query.filter_by(chapter_id=chapter.id).all()
     return render_template("view_quizzes.html", chapter=chapter, quizzes=quizzes)
 
-@views.route("/delete_quiz/<int:quiz_id>", methods=["POST"])
+@views.route("/admin/delete_quiz/<int:quiz_id>", methods=["POST"])
 @login_required
 @admin_required
 def delete_quiz(quiz_id):
@@ -171,7 +171,7 @@ def delete_quiz(quiz_id):
     flash("Quiz deleted successfully.", "success")
     return redirect(url_for("views.view_quizzes", chapter_id=chapter_id))
 
-@views.route("/edit_question/<int:quiz_id>/<int:question_id>", methods=["GET", "POST"])
+@views.route("/admin/edit_question/<int:quiz_id>/<int:question_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
 def edit_question(quiz_id, question_id):
@@ -191,7 +191,7 @@ def edit_question(quiz_id, question_id):
 
     return render_template("edit_question.html", quiz=quiz, question=question)
 
-@views.route("/delete_question/<int:question_id>", methods=["POST"])
+@views.route("/admin/delete_question/<int:question_id>", methods=["POST"])
 @login_required
 @admin_required
 def delete_question(question_id):
@@ -202,7 +202,7 @@ def delete_question(question_id):
     flash("Question deleted successfully!", "danger")
     return redirect(url_for("views.view_quiz", quiz_id=quiz_id))
 
-@views.route("/analytics")
+@views.route("/admin/analytics")
 @login_required
 @admin_required
 def analytics():
@@ -254,10 +254,65 @@ def analytics():
 
 @admin_required
 @login_required
-@views.route('/quiz/<int:quiz_id>/toggle_publish', methods=['POST'])
+@views.route('/admin/quiz/<int:quiz_id>/toggle_publish', methods=['POST'])
 def toggle_publish(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     quiz.published = not quiz.published
     db.session.commit()
     return redirect(request.referrer)
+
+
+@views.route("/user", methods=["GET"])
+@login_required
+@user_required
+def user_dashboard():
+    # Fetch quizzes along with chapter and subject details
+    quizzes = (
+        db.session.query(Quiz.id, Chapter.name.label("chapter_name"), Subject.name.label("subject_name"))
+        .join(Chapter, Quiz.chapter_id == Chapter.id)
+        .join(Subject, Chapter.subject_id == Subject.id)
+        .filter(Quiz.published == True)
+        .filter(Subject.qualification == current_user.qualification)
+        .all()
+    )
+
+    return render_template("user_dashboard.html", quizzes=quizzes)
+
+
+@views.route("/user/quiz/<int:quiz_id>", methods=["GET"])
+@login_required
+@user_required
+def start_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz.id).all()
+
+    # Attach options to each question
+    for question in questions:
+        question.options = question.get_options()  # Ensure each question has an options dict
+
+    return render_template("quiz_page.html", quiz=quiz, questions=questions)
+
+@views.route("/user/quiz/submit", methods=["POST"])
+@login_required
+@user_required
+def submit_quiz():
+    data = request.get_json()
+    quiz_id = data.get("quiz_id")
+    responses = data.get("responses", {})
+
+    # Fetch correct answers directly from the database
+    correct_answers = (
+        db.session.query(Question)
+        .filter(Question.quiz_id == quiz_id, Question.id.in_(responses.keys()))
+        .filter(Question.correct_option == db.func.coalesce(responses[db.cast(Question.id, db.String)], ""))
+        .count()
+    )
+
+    # Store the score
+    score = Score(user_id=current_user.id, quiz_id=quiz_id, total_score=correct_answers)
+    db.session.add(score)
+    db.session.commit()
+
+    return jsonify({"message": "Quiz submitted!", "score": correct_answers})
+
 

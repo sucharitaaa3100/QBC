@@ -1,0 +1,58 @@
+{% extends "user_base.html" %}
+
+{% block title %}{{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ quiz.title }}</h2>
+    <form id="quiz-form">
+        <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+        
+        {% for question in questions %}
+        <div class="mb-4">
+            <p><strong>{{ question.question_text }}</strong></p>
+            {% for key, value in question.options.items() %}
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="{{ question.id }}" value="{{ key }}">
+                <label class="form-check-label">{{ key }}. {{ value }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        
+        <button type="submit" class="btn btn-success">Submit Quiz</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('quiz-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        
+        let formData = new FormData(event.target);
+        let quizData = {
+            quiz_id: formData.get('quiz_id'),
+            responses: {}
+        };
+
+        formData.forEach((value, key) => {
+            if (key !== 'quiz_id') {
+                quizData.responses[key] = value;
+            }
+        });
+
+        fetch("{{ url_for('views.submit_quiz') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(quizData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message + " Your Score: " + data.score);
+            window.location.href = "{{ url_for('views.dashboard') }}";
+        })
+        .catch(error => console.error("Error:", error));
+    });
+</script>
+{% endblock %}

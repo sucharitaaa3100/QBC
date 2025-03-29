@@ -5,14 +5,14 @@
 {% block content %}
 <div class="container">
     <h2 class="mt-3">Add New Subject</h2>
-    
+
     <!-- Display flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
     {% endwith %}
 
     <form method="POST" action="{{ url_for('views.add_subject') }}">
@@ -25,14 +25,14 @@
             <textarea class="form-control" id="description" name="description" rows="3"></textarea>
         </div>
         <div class="mb-3">
-            <label for="qualification" class="form-label">Qualification</label>
+            <label for="qualification" class="form-label">Level</label>
             <select class="form-control" id="qualification" name="qualification" required>
-                <option value="">Select Qualification</option>
-                <option value="bachelor">Bachelor's Degree</option>
-                <option value="master">Master's Degree</option>
-                <option value="phd">Ph.D.</option>
-                <option value="diploma">Diploma</option>
-                <option value="other">Other</option>
+                <option value="">Select your Level</option>
+                <option value="Foundation">Foundation</option>
+                <option value="Diploma in DS">Diploma in DS</option>
+                <option value="Diploma in Programming">Diploma in Programming</option>
+                <option value="BSc">Bsc</option>
+                <option value="BS">BS</option>
             </select>
         </div>
         <button type="submit" class="btn btn-success">Add Subject</button>

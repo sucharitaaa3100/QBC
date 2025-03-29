@@ -24,7 +24,7 @@ class Subject(db.Model):
     def __init__(self, name, qualification, description=""):
         self.name = name.lower()
         self.description = description
-        self.qualification = qualification.lower()
+        self.qualification = qualification
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,7 +57,13 @@ class Question(db.Model):
     option_c = db.Column(db.String(200), nullable=False)
     option_d = db.Column(db.String(200), nullable=False)
     correct_option = db.Column(db.String(1), nullable=False)  # Stores 'A', 'B', 'C', or 'D'
-
+    def get_options(self):
+        return {
+            "A": self.option_a,
+            "B": self.option_b,
+            "C": self.option_c,
+            "D": self.option_d
+        }
 
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)

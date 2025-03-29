@@ -1,11 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Dashboard</title>
-</head>
-<body>
-    <h1>User Dashboard for {{current_user.full_name}}, {{current_user.email}}, {{current_user.qualification}}, {{current_user.dob}}</h1>
-</body>
-</html>
+{% extends "user_base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Welcome, {{ current_user.full_name }}!</h2>
+    <p>Here are the available quizzes based on your qualification:</p>
+
+    <ul class="list-group">
+        {% for quiz in quizzes %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>
+                <strong>Quiz {{ loop.index }}:</strong> {{ quiz.chapter_name }} ({{ quiz.subject_name }})
+            </span>
+            <a href="{{ url_for('views.start_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Start Quiz</a>
+        </li>
+        {% else %}
+        <li class="list-group-item">No quizzes available.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
