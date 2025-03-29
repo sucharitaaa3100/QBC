@@ -111,8 +111,11 @@
         }).catch(error => console.error("Error:", error));
     }
 
-    // Start Quiz
+    // Start Quiz with Alert
     document.getElementById("start-quiz").addEventListener("click", function () {
+        let confirmStart = confirm("⚠️ Attention! Before you start:\n\n- Ensure a stable internet connection.\n- No tab switching is allowed.\n- Exiting full-screen mode will auto-submit.\n\nClick OK to start.");
+        if (!confirmStart) return;
+
         startFullScreen();
         document.getElementById("quiz-form").style.display = "block";
         this.style.display = "none";

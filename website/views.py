@@ -284,6 +284,7 @@ def user_dashboard():
         .join(Chapter, Quiz.chapter_id == Chapter.id)
         .join(Subject, Chapter.subject_id == Subject.id)
         .outerjoin(Question, Question.quiz_id == Quiz.id)
+        .filter(Quiz.published == True)  # Ensure only published quizzes are fetched
         .group_by(Quiz.id, Chapter.name, Subject.name)
         .all()
     )
@@ -300,7 +301,7 @@ def start_quiz(quiz_id):
     # Check if the user has already attempted the quiz
     previous_attempt = Score.query.filter_by(user_id=current_user.id, quiz_id=quiz_id).first()
     if previous_attempt:
-        flash("You have already attempted this quiz. Multiple attempts are not allowed. Ask admin for queries.", "warning")
+        flash("You have already attempted this quiz. Multiple attempts are not allowed. Ask admin - qbc_admin@fastmail.com", "warning")
         return redirect(url_for("views.user_dashboard"))
 
     questions = Question.query.filter_by(quiz_id=quiz.id).all()
@@ -309,7 +310,11 @@ def start_quiz(quiz_id):
     for question in questions:
         question.options = question.get_options()  # Ensure each question has an options dict
 
+    # Flash a warning alert before quiz starts
+    flash("⚠️ Before you start, ensure a stable internet connection and avoid switching tabs. Any violations may auto-submit your quiz.", "info")
+
     return render_template("quiz_page.html", quiz=quiz, questions=questions)
+
 
 
 
