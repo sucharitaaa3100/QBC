@@ -262,17 +262,29 @@ def toggle_publish(quiz_id):
     return redirect(request.referrer)
 
 
-@views.route("/user", methods=["GET"])
+@views.route("/user")
 @login_required
 @user_required
 def user_dashboard():
-    # Fetch quizzes along with chapter and subject details
     quizzes = (
-        db.session.query(Quiz.id, Chapter.name.label("chapter_name"), Subject.name.label("subject_name"))
+        db.session.query(
+            Quiz.id,
+            Chapter.name.label("chapter_name"),
+            Subject.name.label("subject_name"),
+            db.func.count(Question.id).label("total_questions"),
+            db.func.coalesce(
+                db.session.query(Score.total_score)
+                .filter(Score.user_id == current_user.id, Score.quiz_id == Quiz.id)
+                .order_by(Score.time_stamp_of_attempt.desc())
+                .limit(1)
+                .scalar_subquery(),
+                None
+            ).label("latest_score")
+        )
         .join(Chapter, Quiz.chapter_id == Chapter.id)
         .join(Subject, Chapter.subject_id == Subject.id)
-        .filter(Quiz.published == True)
-        .filter(Subject.qualification == current_user.qualification)
+        .outerjoin(Question, Question.quiz_id == Quiz.id)
+        .group_by(Quiz.id, Chapter.name, Subject.name)
         .all()
     )
 
@@ -284,6 +296,13 @@ def user_dashboard():
 @user_required
 def start_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
+
+    # Check if the user has already attempted the quiz
+    previous_attempt = Score.query.filter_by(user_id=current_user.id, quiz_id=quiz_id).first()
+    if previous_attempt:
+        flash("You have already attempted this quiz. Multiple attempts are not allowed. Ask admin for queries.", "warning")
+        return redirect(url_for("views.user_dashboard"))
+
     questions = Question.query.filter_by(quiz_id=quiz.id).all()
 
     # Attach options to each question
@@ -291,6 +310,7 @@ def start_quiz(quiz_id):
         question.options = question.get_options()  # Ensure each question has an options dict
 
     return render_template("quiz_page.html", quiz=quiz, questions=questions)
+
 
 
 @views.route("/user/quiz/submit", methods=["POST"])
