@@ -1,2 +1,7 @@
 venv/
 migrations/
+
+.env
+
+**/__pycache__/*
+**/*.py[cod]
