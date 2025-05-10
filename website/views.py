@@ -19,9 +19,18 @@ def dashboard():
         return redirect(url_for("views.admin_dashboard"))
     return redirect(url_for("views.user_dashboard"))
 
-@views.route("/about")
-def about():
-    return render_template("about.html")  # Ensure about.html exists
+#user admin page
+@views.route("/user-about")
+@login_required
+def user_about():
+    return render_template("user_about.html")
+
+#admin about page
+@views.route("/admin-about")
+@login_required
+@admin_required
+def admin_about():
+    return render_template("admin_about.html")
 
 @views.route("/admin")
 @login_required
