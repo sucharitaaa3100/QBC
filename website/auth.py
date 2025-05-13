@@ -73,7 +73,7 @@ def signup():
                 subject='Email Verification',
                 body=f'Your verification code is: {verification_code}',
                 to=[email],
-                from_email='qbc_admin@fastmail.com'
+                from_email='qbc_admin@gmail.com'
             )
             msg.send()
 
@@ -117,7 +117,7 @@ def resend_verification_code():
             subject='Resend: Email Verification',
             body=f'Your new verification code is: {new_code}',
             to=[email],
-            from_email='qbc_admin@fastmail.com'
+            from_email='qbc_admin@gmail.com'
         )
         msg.send()
 
