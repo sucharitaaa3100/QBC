@@ -7,79 +7,87 @@ from flask_login import LoginManager
 from flask_mailman import Mail
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
+from datetime import datetime, date
 
+# Initialize extensions globally
 db = SQLAlchemy()
-mail = Mail()  
-
-load_dotenv()
-
-from .models import User
-
-DB_NAME = os.environ.get('SQLITE_DB', 'qbc.db') 
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'qbc_admin@gmail.com') 
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '342b6h558h6z2w57')
-SECRET_KEY = os.environ.get('SECRET_KEY', 'shahid')
-
-def create_database(app):
-    with app.app_context():
-        if not path.exists('instance/' + DB_NAME):
-            db.create_all()
-            print("Created Database!")
-
-            # Check if admin user already exists
-            admin_user = User.query.filter_by(email=ADMIN_EMAIL).first()
-            if not admin_user:
-                print("Creating default admin user...")
-                admin = User(
-                    email=ADMIN_EMAIL,
-                    password=generate_password_hash(
-                        ADMIN_PASSWORD
-                    ),
-                    full_name="Admin QBC",
-                    is_admin=True,
-                    is_verified=True
-                )
-                db.session.add(admin)
-                db.session.commit()
-                print("Admin user created!")
-
-        else:
-            print("Database already exists!")
-
+mail = Mail()
+login_manager = LoginManager()
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
-    print("Admin email address:", ADMIN_EMAIL)
-    print("Admin password:", ADMIN_PASSWORD)
-    app.config['SECRET_KEY'] = SECRET_KEY
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
-    
-    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-    app.config['MAIL_PORT'] = 465
-    app.config['MAIL_USERNAME'] = ADMIN_EMAIL
-    app.config['MAIL_PASSWORD'] = ADMIN_PASSWORD
-    app.config['MAIL_USE_TLS'] = False
-    app.config['MAIL_USE_SSL'] = True
 
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # App Configuration
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_super_secret_key_default')
     
+    # Database Configuration
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f"sqlite:///{os.environ.get('SQLITE_DB', 'qbc.db')}")
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Flask-Mailman Configuration
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 465))
+    app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'False').lower() == 'true'
+    app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'True').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', os.environ.get('MAIL_USERNAME'))
+
+    # Initialize extensions with the app
     db.init_app(app)
     mail.init_app(app)
-    Migrate(app, db)
-    # Initialize Flask-Login
-    login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'  # Redirect to login page if not authenticated
+    migrate.init_app(app, db)
 
+    # Configure login manager
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message_category = 'info'
+
+    # User loader for Flask-Login
     @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))  # Fetch user from the database
+    def load_user(id):
+        from .models import User
+        return User.query.get(int(id))
 
+    # Register blueprints
     from .views import views
     from .auth import auth
-    
+
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    create_database(app)
-    
+    # Create database tables and default admin if they don't exist
+    with app.app_context():
+        db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        if not path.exists(db_path):
+            db.create_all()
+            print("Created Database tables!")
+        else:
+            print("Database tables already exist.")
+
+        from .models import User
+        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'adminpassword')
+
+        if not User.query.filter_by(is_admin=True).first():
+            print("No admin user found. Creating a default admin user.")
+            default_admin = User(
+                email=admin_email,
+                full_name='Admin QBC',
+                # Removed method='sha256'
+                password=generate_password_hash(admin_password), 
+                qualification='N/A',
+                dob=date(2000, 1, 1),
+                is_admin=True,
+                is_verified=True
+            )
+            db.session.add(default_admin)
+            db.session.commit()
+            print(f"Default admin user created: Email={admin_email}, Password={admin_password}")
+
     return app
+
