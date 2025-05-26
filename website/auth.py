@@ -33,7 +33,7 @@ def login():
         else:
             flash('Email doesn\'t exist', category='error')
 
-    return render_template('login.html', user=current_user)
+    return render_template('auth/login.html', user=current_user)
 
 @auth.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -81,7 +81,7 @@ def signup():
             flash('Verification code sent! Please check your email.', category='info')
             return redirect(url_for('auth.verify_email', email=email))
 
-    return render_template('sign-up.html', user=current_user)
+    return render_template('auth/sign-up.html', user=current_user)
 
 @auth.route('/verify-email', methods=['GET', 'POST'])
 def verify_email():
@@ -99,7 +99,7 @@ def verify_email():
         else:
             flash('Invalid verification code. Please try again.', category='error')
 
-    return render_template('verify_email.html', email=email, user=current_user)
+    return render_template('auth/verify_email.html', email=email, user=current_user)
 
 def generate_verification_code():
     return str(random.randint(100000, 999999))
@@ -131,4 +131,4 @@ def resend_verification_code():
 @auth.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('views.landing_page'))  
+    return redirect(url_for('views.landing_page'))
