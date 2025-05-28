@@ -1,0 +1,30 @@
+{% extends "base/user_base.html" %}
+
+{% block content %}
+<h2>Quiz Performance</h2>
+<p><strong>Score:</strong> {{ score.total_score }}</p>
+
+<table class="table table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Question</th>
+            <th>Your Answer</th>
+            <th>Correct Answer</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for question in questions %}
+        {% set user_answer = user_answers.get(question.id, "Not Answered") %}
+        <tr>
+            <td>{{ question.question_text }}</td>
+            <td class="{% if user_answer == question.correct_option %}text-success{% else %}text-danger{% endif %}">
+                {{ user_answer }}
+            </td>
+            <td><strong>{{ question.correct_option }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('views.user_dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+{% endblock %}

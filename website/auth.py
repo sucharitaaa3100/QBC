@@ -39,7 +39,7 @@ def login():
         else:
             flash('Email doesn\'t exist', category='error')
 
-    return render_template('login.html', user=current_user)
+    return render_template('auth/login.html', user=current_user)
 
 @auth.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -102,7 +102,7 @@ def signup():
                 db.session.rollback()
                 flash(f"An error occurred during signup: {str(e)}", category='error')
 
-    return render_template('sign-up.html', user=current_user)
+    return render_template('auth/sign-up.html', user=current_user)
 
 @auth.route('/verify-email', methods=['GET', 'POST'])
 def verify_email():
@@ -133,7 +133,7 @@ def verify_email():
         else:
             flash('Invalid verification code. Please try again.', category='error')
 
-    return render_template('verify_email.html', email=email, user=current_user)
+    return render_template('auth/verify_email.html', email=email, user=current_user)
 
 def generate_verification_code():
     """Generates a 6-digit numeric verification code."""
@@ -188,3 +188,4 @@ def logout():
     session.clear()
     flash('You have been logged out.', category='success')
     return redirect(url_for('views.landing_page'))
+
