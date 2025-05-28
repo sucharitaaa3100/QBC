@@ -25,21 +25,21 @@ def dashboard():
 @views.route("/user-about")
 @login_required
 def user_about():
-    return render_template("user_about.html")
+    return render_template("user/about.html")
 
 #admin about page
 @views.route("/admin-about")
 @login_required
 @admin_required
 def admin_about():
-    return render_template("admin_about.html")
+    return render_template("admin/about.html")
 
 @views.route("/admin")
 @login_required
 @admin_required
 def admin_dashboard():
     subjects = Subject.query.all()
-    return render_template("admin_dashboard.html", subjects=subjects)
+    return render_template("admin/dashboard.html", subjects=subjects)
 
 @views.route("/admin/delete_subject/<int:subject_id>", methods=["POST"])
 @login_required
@@ -82,7 +82,7 @@ def add_subject():
 
         return redirect(url_for("views.admin_dashboard"))
 
-    return render_template("add_subject.html")
+    return render_template("subjects_chapters/add_subject.html")
 
 @views.route("/admin/chapters/<int:subject_id>")
 @login_required
@@ -91,7 +91,7 @@ def view_chapters(subject_id):
     subject = Subject.query.get_or_404(subject_id)
     chapters = Chapter.query.filter_by(subject_id=subject_id).all()
     
-    return render_template("view_chapters.html", subject=subject, chapters=chapters)
+    return render_template("subjects_chapters/view_chapters.html", subject=subject, chapters=chapters)
 
 @views.route("/admin/add_chapter/<int:subject_id>", methods=["GET", "POST"])
 @login_required
@@ -109,7 +109,7 @@ def add_chapter(subject_id):
         flash("Chapter added successfully!", "success")
         return redirect(url_for("views.view_chapters", subject_id=subject.id))  
 
-    return render_template("add_chapter.html", subject=subject)
+    return render_template("subjects_chapters/add_chapter.html", subject=subject)
 
 @views.route("/admin/quiz/<int:quiz_id>", methods=["GET", "POST"])
 @login_required
@@ -140,7 +140,7 @@ def view_quiz(quiz_id):
         flash("Question added successfully!", "success")
         return redirect(url_for("views.view_quiz", quiz_id=quiz.id))
 
-    return render_template("view_quiz.html", quiz=quiz, questions=questions)
+    return render_template("quizzes/view_quiz.html", quiz=quiz, questions=questions)
 
 @views.route("/admin/add_quiz/<int:chapter_id>", methods=["GET", "POST"])
 @login_required
@@ -161,7 +161,7 @@ def add_quiz(chapter_id):
         except ValueError:
             flash("Time duration must be a valid number!", "error")
 
-    return render_template("add_quiz.html", chapter=chapter)
+    return render_template("quizzes/add_quiz.html", chapter=chapter)
 
 @views.route("/admin/view_quizzes/<int:chapter_id>")
 @login_required
@@ -169,7 +169,7 @@ def add_quiz(chapter_id):
 def view_quizzes(chapter_id):
     chapter = Chapter.query.get_or_404(chapter_id)
     quizzes = Quiz.query.filter_by(chapter_id=chapter.id).all()
-    return render_template("view_quizzes.html", chapter=chapter, quizzes=quizzes)
+    return render_template("quizzes/view_quizzes.html", chapter=chapter, quizzes=quizzes)
 
 @views.route("/admin/delete_quiz/<int:quiz_id>", methods=["POST"])
 @login_required
@@ -200,7 +200,7 @@ def edit_question(quiz_id, question_id):
         flash("Question updated successfully!", "success")
         return redirect(url_for("views.view_quiz", quiz_id=quiz.id))
 
-    return render_template("edit_question.html", quiz=quiz, question=question)
+    return render_template("quizzes/edit_question.html", quiz=quiz, question=question)
 
 @views.route("/admin/delete_question/<int:question_id>", methods=["POST"])
 @login_required
@@ -217,7 +217,7 @@ def delete_question(question_id):
 @login_required
 @admin_required
 def admin_analytics():
-    return render_template('admin_analytics.html')
+    return render_template('admin/analytics.html')
 
 @views.route('/admin/analytics/data')
 @login_required  # If applicable
@@ -308,7 +308,7 @@ def user_dashboard():
         .all()
     )
 
-    return render_template("user_dashboard.html", quizzes=quizzes)
+    return render_template("user/dashboard.html", quizzes=quizzes)
 
 
 @views.route("/user/quiz/<int:quiz_id>", methods=["GET"])
@@ -332,7 +332,7 @@ def start_quiz(quiz_id):
     # Flash a warning alert before quiz starts
     flash("⚠️ Before you start, ensure a stable internet connection and avoid switching tabs. Any violations may auto-submit your quiz.", "info")
 
-    return render_template("quiz_page.html", quiz=quiz, questions=questions)
+    return render_template("quizzes/quiz_page.html", quiz=quiz, questions=questions)
 
 
 
@@ -364,7 +364,7 @@ def start_quiz(quiz_id):
 @views.route('/user/analytics')
 @login_required
 def user_analytics():
-    return render_template('user_analytics.html')
+    return render_template('user/analytics.html')
 
 @user_required
 @views.route('/user/analytics/data')
@@ -468,12 +468,12 @@ def view_performance(quiz_id):
     except json.JSONDecodeError:
         user_answers = {}
     
-    return render_template("performance.html", questions=questions, user_answers=user_answers, score=score)
+    return render_template("user/performance.html", questions=questions, user_answers=user_answers, score=score)
 
 @views.route("/profile")
 @login_required
 def profile():
-    return render_template("profile.html", user=current_user)
+    return render_template("user/profile.html", user=current_user)
 
 @views.route("/edit-profile", methods=["GET", "POST"])
 @login_required
@@ -502,7 +502,7 @@ def edit_profile():
 
         return redirect(url_for("views.profile"))
 
-    return render_template("edit_profile.html", user=current_user)
+    return render_template("user/edit_profile.html", user=current_user)
 
 @views.route('/change_password', methods=['GET', 'POST'])
 @login_required
@@ -525,13 +525,13 @@ def change_password():
         flash('Password updated successfully', 'success')
         return redirect(url_for('views.profile', user_id=current_user.id))
 
-    return render_template('change_password.html')
+    return render_template("user/change_password.html")
 
 @views.route("/admin/profile")
 @login_required
 @admin_required
 def admin_profile():
-    return render_template("admin_profile.html", admin=current_user)
+    return render_template("admin/profile.html", admin=current_user)
 
 @views.route("/admin/profile/edit", methods=["GET", "POST"])
 @login_required
@@ -548,7 +548,7 @@ def edit_admin_profile():
         flash("Profile updated successfully!", "success")
         return redirect(url_for("views.admin_profile"))
 
-    return render_template("edit_admin_profile.html", admin=current_user)
+    return render_template("admin/edit_admin_profile.html", admin=current_user)
 
 @views.route('/admin/change/password', methods=['GET', 'POST'])
 @login_required
@@ -572,4 +572,4 @@ def admin_change_password():
         flash('Password updated successfully', 'success')
         return redirect(url_for('views.admin_profile', user_id=current_user.id))
 
-    return render_template('admin_change_password.html')
+    return render_template('admin/change_password.html')

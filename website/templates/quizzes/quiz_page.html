@@ -1,4 +1,4 @@
-{% extends "user_base.html" %}
+{% extends "base/user_base.html" %}
 {% block title %}{{ quiz.title }}{% endblock %}
 
 {% block content %}
@@ -53,7 +53,7 @@
 </div>
 
 <script>
-    let timeLeft = {{ quiz.time_duration|int }} * 60;
+    let timeLeft = parseInt("{{ quiz.time_duration|int }}") * 60;
     let quizSubmitted = false;  // Prevent multiple submissions
 
     // Update Timer
