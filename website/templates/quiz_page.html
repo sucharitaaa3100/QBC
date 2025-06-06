@@ -36,7 +36,9 @@
 </div>
 
 <script>
-    //let timeLeft = {{ quiz.time_duration }} * 60;
+   let timeLeft = Number("{{ quiz.time_duration|default:'10' }}") * 60;
+
+
     let quizSubmitted = false;  // Prevent multiple submissions
 
     // Update Timer
