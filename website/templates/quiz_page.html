@@ -1,14 +1,31 @@
-{% extends "user_base.html" %}
+{% extends "base/user_base.html" %}
 {% block title %}{{ quiz.title }}{% endblock %}
 
 {% block content %}
 {% set hide_navbar = True %}  <!-- Hide Navbar -->
 
+<style>
+.timer-green {
+    color: #28a745; /* Bootstrap green */
+    font-weight: bold;
+}
+.timer-red {
+    color: #dc3545; /* Bootstrap red */
+    font-weight: bold;
+    animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink {
+    to {
+        visibility: hidden;
+    }
+}
+</style>
+
 <div class="container">
     <h2 class="mt-3">{{ quiz.title }}</h2>
     <p><strong>Chapter:</strong> {{ quiz.chapter.name.title() }}</p>
     <p><strong>Subject:</strong> {{ quiz.chapter.subject.name.title() }}</p>
-    <p><strong>Time Left:</strong> <span id="timer">{{ quiz.time_duration }} mins</span></p>
+    <p><strong>Time Left:</strong> <span id="timer" class="timer-green">{{ quiz.time_duration }} mins</span></p>
 
     <!-- Start Quiz Button -->
     <button id="start-quiz" class="btn btn-primary">Start Quiz</button>
@@ -36,18 +53,24 @@
 </div>
 
 <script>
-
-
-
+    let timeLeft = parseInt("{{ quiz.time_duration|int }}") * 60;
     let quizSubmitted = false;  // Prevent multiple submissions
 
     // Update Timer
     function updateTimer() {
         if (quizSubmitted) return;
-        
         let minutes = Math.floor(timeLeft / 60);
         let seconds = timeLeft % 60;
-        document.getElementById("timer").innerText = minutes + "m " + seconds + "s";
+        let timerElem = document.getElementById("timer");
+        timerElem.innerText = minutes + "m " + seconds + "s";
+
+        // Switch to red and show modal at 1 minute
+        if (timeLeft === 60) {
+            timerElem.classList.remove("timer-green");
+            timerElem.classList.add("timer-red");
+            var oneMinuteModal = new bootstrap.Modal(document.getElementById('oneMinuteModal'));
+            oneMinuteModal.show();
+        }
 
         if (timeLeft <= 0) {
             alert("Time is up! Your quiz will be submitted automatically.");
@@ -165,5 +188,23 @@
     document.addEventListener("webkitfullscreenchange", handleExit);
     document.addEventListener("msfullscreenchange", handleExit);
 </script>
+
+<!-- Add a Bootstrap modal for 1 minute warning (hidden by default) -->
+<div class="modal fade" id="oneMinuteModal" tabindex="-1" aria-labelledby="oneMinuteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="oneMinuteModalLabel">⚠️ 1 Minute Left</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Only 1 minute left! Please finish and submit your quiz soon.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
